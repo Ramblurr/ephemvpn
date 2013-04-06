@@ -1,0 +1,199 @@
+#!/usr/bin/env python
+"""Launches ephemeral VPNs on EC2
+
+Your AWS credentials must be passed via the -a and -s arguments, or will be
+read from ~/.ephemvpnrc (see ephemvpnrc.sample). By default it launches an
+IPSEC vpn in Europe.
+
+The supported VPNs config scripts auto generate as much config as possible,
+but can be overriden with ~/.ephemvpnrc.
+
+An identity file is not needed by every VPN type, but a keypair name is.
+Just provide the name of the keypair with -I.
+
+When using -i, if your identity file's file name minus the extension is not
+the name of the key, then set -I too.
+
+"""
+__LICENSE__ = """
+Copyright (c) 2013 - Casey Link <unnamedrambler@gmail.com>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
+
+import argparse
+import getpass
+import os
+import ConfigParser
+from time import sleep
+from fabric.api import settings
+
+import configuration as config
+import vpntypes
+import awshelpers as aws
+
+import logging as log
+
+def launch(vpn, aws_region):
+    '''Launch a single instance of the provided ami
+
+    Parameters:
+        vpn   -- the VPN object
+    '''
+
+    root_device = '/dev/sda1'
+    root_device_size = '10'
+
+    log.info('authenticating to EC2')
+    ec2_connection= aws._get_ec2_connection(aws_region)
+    aws._create_security_group(ec2_connection)
+    ami_id = config.AMI_ID_BY_REGION[ec2_connection.region.name]
+    mapping = aws._get_block_device_mapping(root_device, root_device_size, delete_on_terminate=True)
+    reservation = ec2_connection.run_instances(
+            ami_id,
+            key_name=config.AWS_KEY_FILE,
+            security_group_ids=[config.AMI_SECURITY_GROUP],
+            block_device_map=mapping,
+            instance_initiated_shutdown_behavior='terminate',
+            instance_type='t1.micro',
+            user_data = vpn.config_script()
+    )
+
+    # TODO good idea to assume it's the first one?
+    instance = reservation.instances[0]
+    log.info('spinning up the instance')
+    sleep(10)
+
+    instance.update()
+
+    while instance.state != 'running':
+        sleep(10)
+        instance.update()
+
+    if instance.state == 'running':
+        log.info('new instance "' + instance.id + '" accessible at ' + instance.public_dns_name)
+    else:
+        log.error('starting failed. instance status: ' + instance.state)
+        return None
+
+    instance.add_tag('vpn_type', vpn._type)
+    return instance.public_dns_name
+
+
+def configure(hostname, vpn):
+    log.info('configuring instance {0}'.format(hostname))
+    with settings(host_string=hostname, key_filename=config.LOCAL_AWS_KEY_FILE,
+        user=config.AWS_USER_NAME,connection_attempts=10):
+        vpn.post_configure()
+
+
+def _parse_conf(path):
+    c = ConfigParser.ConfigParser()
+    c.read([path])
+
+    try:
+        config.AWS_API_KEY = c.get('amazon', 'AWS_API_KEY')
+        config.AWS_SECRET_KEY = c.get('amazon', 'AWS_SECRET_KEY')
+        config.AWS_KEY_FILE= c.get('amazon', 'AWS_KEY_FILE')
+        config.LOCAL_AWS_KEY_FILE = c.get('amazon', 'LOCAL_AWS_KEY_FILE')
+    except ConfigParser.NoSectionError:
+        pass
+
+    return c
+
+def _main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-r', '--region', choices=config.AMI_ID_BY_REGION.keys(), help="Where in the world to create the VPN (default: %(default)s)", default='eu-west-1')
+    parser.add_argument('-t', '--vpn-type', choices=vpntypes.TYPES.keys(), help="The type of feed to fetch (default: %(default)s)", default='ipsec')
+    parser.add_argument('-a', '--api-key', help="Your AWS API key")
+    parser.add_argument('-s', '--secret-key', action='store_true', help="Prompts for your AWS secret key secret_key interactively (no echo)")
+    parser.add_argument('-S', '--no-prompt-secret', help="Your AWS secret key will be read from the arguments")
+    parser.add_argument('-i', '--identity-file', help="The path to your key pair (not required by all VPN types)")
+    parser.add_argument('-I', '--key-name', help="The name of the keypair to use. ")
+    parser.add_argument('-c', '--config', help="Path to alternate config file", default=os.path.expanduser('~/.ephemvpnrc'))
+    parser.add_argument('-v', '--verbose', action='store_true', help="Be more verbose")
+    args = parser.parse_args()
+
+    if args.verbose:
+        log.basicConfig(level=log.DEBUG, format='%(asctime)s %(name)-8s %(message)s')
+    else:
+        log.basicConfig(level=log.INFO, format='%(message)s')
+
+
+    cf = _parse_conf(args.config)
+
+    secret_key = None
+    if args.secret_key:
+        secret_key = getpass.getpass()
+    elif args.no_prompt_secret:
+        secret_key = args.no_prompt_secret
+
+    if args.api_key:
+        config.AWS_API_KEY = args.api_key
+    if secret_key:
+        config.AWS_SECRET_KEY = secret_key
+
+    if args.identity_file:
+        config.LOCAL_AWS_KEY_FILE = args.identity_file
+        if args.key_name:
+            config.AWS_KEY_FILE = args.key_name
+        else:
+           name, ext = os.splitext(os.basename(args.identity_file))
+           config.AWS_KEY_FILE = name
+    elif args.key_name:
+        config.AWS_KEY_FILE = name
+
+    # sanity check
+    if not config.AWS_API_KEY or not config.AWS_SECRET_KEY:
+        print("AWS Credentials required")
+        parser.print_usage()
+        return
+
+    if not config.AWS_KEY_FILE:
+        print("AWS Keypair name required")
+        parser.print_usage()
+        return
+
+    try:
+        vpn = vpntypes.VPN(args.vpn_type, cf)
+    except ValueError:
+        print("This VPN Type is broken")
+        return
+
+    if vpn.needs_post_configure() and not args.identity_file:
+        print("VPN type {} requires SSHing, so an identity file (private key) is required".format(args.vpn_type))
+        parser.print_usage()
+        return
+
+    host = launch(vpn, args.region)
+    if host is not None:
+        configure(host, vpn)
+
+    print("\nVPN Deployed\n")
+    print(vpn.human_readable_data())
+    print("Hostname: {}".format(host))
+
+if __name__ == '__main__':
+    _main()

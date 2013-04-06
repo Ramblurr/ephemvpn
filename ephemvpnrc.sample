@@ -1,0 +1,13 @@
+# Amazon credentials
+[amazon]
+AWS_API_KEY = foo
+AWS_SECRET_KEY = bar
+AWS_KEY_FILE = name
+LOCAL_AWS_KEY_FILE = ~/.ssh/%(AWS_KEY_FILE)s.pem
+
+#configure ipsec settings
+#[ipsec]
+#user = testuser
+#password = a bad pass
+#presharedkey = a worse psk
+

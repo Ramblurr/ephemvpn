@@ -1,0 +1,4 @@
+Fabric==1.4.3
+boto==2.6.0
+pycrypto==2.6
+ssh==1.8.0
