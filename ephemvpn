@@ -195,5 +195,9 @@ def _main():
     print(vpn.human_readable_data())
     print("Hostname: {}".format(host))
 
+    print("\nWARNING WARNING!!!!!\n")
+    print("This development version of ephemvpn does NOT SHUT DOWN THE instances")
+    print("You must login to the EC2 console and termiante them: https://console.aws.amazon.com")
+
 if __name__ == '__main__':
     _main()
