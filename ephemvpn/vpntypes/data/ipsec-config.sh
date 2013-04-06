@@ -107,7 +107,7 @@ cat > /etc/ppp/chap-secrets <<EOF
 # Secrets for authentication using CHAP
 # client	server	secret			IP addresses
 
-$VPN_USER	l2tpd   $VPN_PASSWORD   *
+$VPN_USER	l2tpd   "$VPN_PASSWORD"   *
 EOF
 
 iptables -t nat -A POSTROUTING -s 192.168.42.0/24 -o eth0 -j MASQUERADE
