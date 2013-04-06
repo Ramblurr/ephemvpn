@@ -28,7 +28,12 @@ Requires Python 2.7 and virtualenv
 
 Create your virtualenv then:
 
-    pip install -e requirements.txt
+    $ source your/virtenv/bin/activate
+    $ git clone https://github.com/Ramblurr/ephemvpn.git
+    $ cd ephemvpn
+    $ pip install -e .
+
+(TODO: submit to pypi?)
 
 ### 2. EC2
 
