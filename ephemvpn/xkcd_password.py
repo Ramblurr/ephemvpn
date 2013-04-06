@@ -260,3 +260,5 @@ if __name__ == '__main__':
                                     n_words=options.numwords,
                                     acrostic=options.acrostic))
         count -= 1
+
+wordfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), "3esl.txt")

@@ -50,9 +50,9 @@ import ConfigParser
 from time import sleep
 from fabric.api import settings
 
-import configuration as config
-import vpntypes
-import awshelpers as aws
+from ephemvpn import configuration as config
+from ephemvpn import vpntypes
+from ephemvpn import awshelpers as aws
 
 import logging as log
 

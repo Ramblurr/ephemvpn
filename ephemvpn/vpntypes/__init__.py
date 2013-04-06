@@ -1,5 +1,5 @@
-import xkcd_password
-my_wordlist = xkcd_password.generate_wordlist(wordfile="3esl.txt",
+from ephemvpn import xkcd_password
+my_wordlist = xkcd_password.generate_wordlist(wordfile=xkcd_password.wordfile,
                                 min_length=5,
                                 max_length=9,
                                 valid_chars='.')

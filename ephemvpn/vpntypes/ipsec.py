@@ -2,7 +2,7 @@ import os
 import random
 import ConfigParser
 from pipes import quote as q
-from vpntypes import VPNConfig, names, human_readble_pass
+from ephemvpn.vpntypes import VPNConfig, names, human_readble_pass
 
 
 class IPSecVPN(VPNConfig):
@@ -28,7 +28,7 @@ class IPSecVPN(VPNConfig):
 
 
     def config_script(self):
-        fname  = os.path.join(os.path.abspath(os.path.dirname(__file__)), "ipsec-config.sh")
+        fname  = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/ipsec-config.sh")
         f      = open(fname, 'r')
         script = f.read()
         f.close()
