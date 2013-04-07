@@ -59,6 +59,7 @@ import math
 import ConfigParser
 import parsedatetime
 
+import ephemvpn
 from ephemvpn import configuration as config
 from ephemvpn import vpntypes, launch, configure
 from ephemvpn.timehelpers import readable_delta
@@ -138,8 +139,8 @@ def _confirm_time(shutdown_t):
     human_date = time.strftime(nice_fmt, shutdown_t)
     fuzzy_date = readable_delta(now, shutdown_t)
 
-    log.info("The VPN will self-terminate %s after boot probably around %s" % (fuzzy_date,human_date))
-    return confirm("Launch the VPN?", resp=False)
+    log.info("the vpn will be released into the ether %s after boot\n(probably around %s)" % (fuzzy_date,human_date))
+    return confirm("proceed?", resp=False)
 
 def _main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -165,20 +166,6 @@ def _main():
 
     # parse config file
     cf = _parse_conf(args.config)
-
-    # calculate running time
-    d_min, shutdown_t = _parse_running_time(args.running_time)
-
-    # at scheduler doesn't support subminute periods
-    if d_min < 1:
-        log.error("Error:running time must be greater than one minute")
-        return 1
-
-    if not args.quiet and not _confirm_time(shutdown_t):
-        return 1
-
-    config.AT_RUNNING_MINUTES = d_min
-
     secret_key = None
     if args.secret_key:
         secret_key = getpass.getpass()
@@ -214,19 +201,35 @@ def _main():
     try:
         vpn = vpntypes.VPN(args.vpn_type, cf, config.AT_RUNNING_MINUTES)
     except ValueError:
-        log.error("This VPN Type is broken")
+        log.error("this vpn type is broken")
         return 1
 
     if vpn.needs_post_configure() and not args.identity_file:
-        log.error("VPN type {} requires SSHing, so an identity file (private key) is required".format(args.vpn_type))
+        log.error("vpn type {} requires sshing, so an identity file (private key) is required".format(args.vpn_type))
         parser.print_usage()
         return 1
+
+    # calculate running time
+    d_min, shutdown_t = _parse_running_time(args.running_time)
+
+    # at scheduler doesn't support subminute periods
+    if d_min < 1:
+        log.error("Error:running time must be greater than one minute")
+        return 1
+
+    log.info("ephemvpn v{}".format(ephemvpn.__version__))
+    log.info("summoning one {} vpn".format(args.vpn_type))
+    if not args.quiet and not _confirm_time(shutdown_t):
+        return 1
+
+    config.AT_RUNNING_MINUTES = d_min
+
 
     host = launch(vpn, args.region)
     if host is not None:
         configure(host, vpn)
 
-    log.info("\nVPN Deployed\n")
+    log.info("\nephemeral vpn summoned\n")
     log.info(vpn.human_readable_data())
     log.info("Hostname: {}".format(host))
     return 0
