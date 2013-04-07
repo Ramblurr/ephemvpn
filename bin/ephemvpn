@@ -10,9 +10,15 @@ but can be overriden with ~/.ephemvpnrc.
 
 An identity file is not needed by every VPN type, but a keypair name is.
 Just provide the name of the keypair with -I.
-
 When using -i, if your identity file's file name minus the extension is not
 the name of the key, then set -I too.
+
+The running time can be expressed explicitly or with natural language.
+Examples:
+
+    -t 15:00           terminates at 3pm
+    -t 1h              terminates one hour from launch
+    -t 'next tuesday'  terminates next tuesday at midnight
 
 """
 __LICENSE__ = """
@@ -46,13 +52,57 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import argparse
 import getpass
 import os
+import time
+import datetime
+import math
 import ConfigParser
+import parsedatetime
 
 from ephemvpn import configuration as config
 from ephemvpn import vpntypes, launch, configure
+from ephemvpn.timehelpers import readable_delta
 
 
 import logging as log
+
+def confirm(prompt=None, resp=False):
+    """prompts for yes or no response from the user. Returns True for yes and
+    False for no.
+
+    'resp' should be set to the default value assumed by the caller when
+    user simply types ENTER.
+
+    >>> confirm(prompt='Create Directory?', resp=True)
+    Create Directory? [y]|n:
+    True
+    >>> confirm(prompt='Create Directory?', resp=False)
+    Create Directory? [n]|y:
+    False
+    >>> confirm(prompt='Create Directory?', resp=False)
+    Create Directory? [n]|y: y
+    True
+
+    """
+
+    if prompt is None:
+        prompt = 'Confirm'
+
+    if resp:
+        prompt = '%s [%s]|%s: ' % (prompt, 'y', 'n')
+    else:
+        prompt = '%s [%s]|%s: ' % (prompt, 'n', 'y')
+
+    while True:
+        ans = raw_input(prompt)
+        if not ans:
+            return resp
+        if ans not in ['y', 'Y', 'n', 'N']:
+            print 'please enter y or n.'
+            continue
+        if ans == 'y' or ans == 'Y':
+            return True
+        if ans == 'n' or ans == 'N':
+            return False
 
 def _parse_conf(path):
     c = ConfigParser.ConfigParser()
@@ -68,26 +118,65 @@ def _parse_conf(path):
 
     return c
 
+def _parse_running_time(running_time):
+    cal               = parsedatetime.Calendar()
+    shutdown_t,result = cal.parse(running_time)
+
+    # thu feb 20 14:50:00 1997
+    d_sec      = time.mktime(shutdown_t) - time.time()
+    d_min      = int(math.ceil(d_sec)/60)
+
+    return d_min, shutdown_t
+
+
+
+def _confirm_time(shutdown_t):
+    now               = datetime.datetime.now()
+    # thu feb 20 14:50:00 1997
+    nice_fmt   = '%a %b %d %h:%m %y'
+    human_date = time.strftime(nice_fmt, shutdown_t)
+    fuzzy_date = readable_delta(now, shutdown_t)
+
+    print("The VPN will self-terminate %s after boot probably around %s" % (fuzzy_date,human_date))
+    return confirm("Launch the VPN?", resp=False)
+
 def _main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-r', '--region', choices=config.AMI_ID_BY_REGION.keys(), help="Where in the world to create the VPN (default: %(default)s)", default='eu-west-1')
-    parser.add_argument('-t', '--vpn-type', choices=vpntypes.TYPES.keys(), help="The type of feed to fetch (default: %(default)s)", default='ipsec')
+    parser.add_argument('-v', '--vpn-type', choices=vpntypes.TYPES.keys(), help="The type of feed to fetch (default: %(default)s)", default='ipsec')
     parser.add_argument('-a', '--api-key', help="Your AWS API key")
     parser.add_argument('-s', '--secret-key', action='store_true', help="Prompts for your AWS secret key secret_key interactively (no echo)")
     parser.add_argument('-S', '--no-prompt-secret', help="Your AWS secret key will be read from the arguments")
     parser.add_argument('-i', '--identity-file', help="The path to your key pair (not required by all VPN types)")
     parser.add_argument('-I', '--key-name', help="The name of the keypair to use. ")
     parser.add_argument('-c', '--config', help="Path to alternate config file", default=os.path.expanduser('~/.ephemvpnrc'))
-    parser.add_argument('-v', '--verbose', action='store_true', help="Be more verbose")
+    parser.add_argument('-V', '--verbose', action='store_true', help="Be more verbose")
+    parser.add_argument('-q', '--quiet', action='store_true', help="Output nothing. For non-interactive unattended launches, assumes yes to all questions")
+    parser.add_argument('-t', '--running-time', help="The time at or after which the VPN will terminate itself (default: %(default)s)", default='1h')
     args = parser.parse_args()
 
     if args.verbose:
         log.basicConfig(level=log.DEBUG, format='%(asctime)s %(name)-8s %(message)s')
+    elif args.quiet:
+        log.basicConfig(level=log.CRITICAL, format='%(asctime)s %(name)-8s %(message)s')
     else:
         log.basicConfig(level=log.INFO, format='%(message)s')
 
-
+    # parse config file
     cf = _parse_conf(args.config)
+
+    # calculate running time
+    d_min, shutdown_t = _parse_running_time(args.running_time)
+
+    # at scheduler doesn't support subminute periods
+    if d_min < 1:
+        print("Error:running time must be greater than one minute")
+        return
+
+    if not args.quiet and not _confirm_time(shutdown_t):
+        return
+
+    config.AT_RUNNING_MINUTES = d_min
 
     secret_key = None
     if args.secret_key:
@@ -122,7 +211,7 @@ def _main():
         return
 
     try:
-        vpn = vpntypes.VPN(args.vpn_type, cf)
+        vpn = vpntypes.VPN(args.vpn_type, cf, config.AT_RUNNING_MINUTES)
     except ValueError:
         print("This VPN Type is broken")
         return
@@ -140,9 +229,6 @@ def _main():
     print(vpn.human_readable_data())
     print("Hostname: {}".format(host))
 
-    print("\nWARNING WARNING!!!!!\n")
-    print("This development version of ephemvpn does NOT SHUT DOWN THE instances")
-    print("You must login to the EC2 console and termiante them: https://console.aws.amazon.com")
 
 if __name__ == '__main__':
     _main()

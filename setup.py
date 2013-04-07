@@ -15,5 +15,6 @@ setup(
     install_requires=[
         'Fabric==1.4.3',
         'boto==2.6.0',
+        'parsedatetime',
     ],
 )

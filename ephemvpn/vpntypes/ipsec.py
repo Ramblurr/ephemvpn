@@ -8,7 +8,7 @@ from ephemvpn.vpntypes import VPNConfig, names, human_readble_pass
 class IPSecVPN(VPNConfig):
     _type = 'ipsec'
 
-    def __init__(self, config):
+    def __init__(self, config, running_minutes):
 
         defaults = {
                 'user'     : random.choice(names),
@@ -23,7 +23,7 @@ class IPSecVPN(VPNConfig):
         except ConfigParser.NoSectionError:
             pass
 
-        VPNConfig.__init__(self, defaults)
+        VPNConfig.__init__(self, defaults, running_minutes)
 
 
 
@@ -37,7 +37,7 @@ class IPSecVPN(VPNConfig):
         user     = q(self.config['user'])
         password = q(self.config['password'])
 
-        return script.format(psk, user, password)
+        return script.format(psk, user, password, self.running_minutes)
 
     def _data(self):
         return self.config

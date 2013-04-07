@@ -125,3 +125,5 @@ EOF
 /etc/init.d/ipsec restart
 /etc/init.d/xl2tpd restart
 
+
+echo "sudo halt" | at now + {3} minutes

@@ -50,7 +50,6 @@ Finally, `$ ./ephemvpnrc`
 
 ## TODO & Known Issues
 
-* [ Turn the VPNS Off!!! ](http://stackoverflow.com/questions/10541363/self-terminating-aws-ec2-instance)
 * Audit ipsec config
 * Add Openvpn
 * Generate keypair for user ([ctrl+f create_keypair here](http://boto.s3.amazonaws.com/ref/ec2.html))

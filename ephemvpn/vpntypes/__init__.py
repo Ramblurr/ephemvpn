@@ -16,8 +16,9 @@ names = [ 'bob', 'yoda', 'mcfly', 'eminem', 'ghandi', 'jeff', 'joan', 'hillary',
 
 class VPNConfig(object):
 
-    def __init__(self, config):
+    def __init__(self, config, running_minutes):
         self.config = config
+        self.running_minutes = running_minutes
 
     def config_script(self):
         '''
@@ -61,6 +62,6 @@ def _vpn(vpn_type):
 
     return TYPES[vpn_type]
 
-def VPN(vpn_type, config):
-    return _vpn(vpn_type)(config)
+def VPN(vpn_type, config_parser, running_minutes):
+    return _vpn(vpn_type)(config_parser, running_minutes)
 
