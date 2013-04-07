@@ -43,5 +43,10 @@ class IPSecVPN(VPNConfig):
         return self.config
 
     def human_readable_data(self):
-        return "VPN Type: IPSEC/L2TP\nPreshared Key (PSK): {0}\nUsername: {1}\nPassword: {2}".format(self.config['psk'], self.config['user'], self.config['password'])
+        return {
+                "VPN type"             : "IPSEC/L2TP PSK",
+                "Pre-shared key (PSK)" : self.config['psk'],
+                "Username"             : self.config['user'],
+                "Password"             : self.config['password']
+               }
 

@@ -46,7 +46,7 @@ class VPNConfig(object):
 
     def human_readable_data(self):
         '''
-        Message to display to the user after setup
+        Dictionary of labels/values to be shown to the user
         '''
 
 # import vpn types

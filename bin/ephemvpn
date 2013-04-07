@@ -230,8 +230,16 @@ def _main():
         configure(host, vpn)
 
     log.info("\nephemeral vpn summoned\n")
-    log.info(vpn.human_readable_data())
-    log.info("Hostname: {}".format(host))
+
+    info = vpn.human_readable_data()
+    info['Hostname'] = host
+
+    longest = max(map(len, info.keys()))
+    fmt = "{0:>{width}}: {1}"
+    for k,v in info.iteritems():
+        log.info(fmt.format(k, v, width=longest))
+    # a new line for aesthetics
+    log.info('\n')
     return 0
 
 if __name__ == '__main__':

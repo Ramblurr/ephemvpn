@@ -1,8 +1,10 @@
 from distutils.core import setup
 
+from ephemvpn import __version__
+
 setup(
     name='ephemvpn',
-    version='0.1',
+    version=__version__,
     author='Casey Link',
     author_email='unnamedrambler@gmail.com',
     packages=['ephemvpn'],
