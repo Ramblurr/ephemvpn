@@ -1,11 +1,9 @@
-Ephemeral VPN
-============
+## ephemeral vpn
 
-VPNs that last a short time.
+vpns created on demand that last a short time
 
-**Example:**
-
-    # ephemvpn -t 5m
+``` bash
+    $ ephemvpn -t 5m
     ephemvpn v0.1
     summoning one ipsec vpn
     the vpn will be released into the ether 5 minutes after boot
@@ -24,6 +22,12 @@ VPNs that last a short time.
                 Username: mcfly
                 Password: baton loony paycheck obituary
                 Hostname: ec2-54-246-64-31.eu-west-1.compute.amazonaws.com
+```
+
+ephemvpn is implemented in *python* with
+*[boto](http://code.google.com/p/boto)* and *[fabric](http://fabfile.org/)*.
+Amazon's EC2 is the only supported cloud provider at this time (patches
+welcome).
 
 ## Setup
 
@@ -33,10 +37,12 @@ Requires Python 2.7 and virtualenv
 
 Create your virtualenv then:
 
+```bash
     $ source your/virtenv/bin/activate
     $ git clone https://github.com/Ramblurr/ephemvpn.git
     $ cd ephemvpn
     $ pip install -e .
+```
 
 (TODO: submit to pypi?)
 
@@ -70,9 +76,9 @@ their own licenses:
 
 **ipsec config**
 
-The IPSEC config script is Copyright Thomas Sarlandie 2012 It is licensed under
-the Creative Commons Attribution-ShareAlike 3.0 Unported License:
-http://creativecommons.org/licenses/by-sa/3.0/
+* The IPSEC config script is Copyright Thomas Sarlandie 2012
 
-Project: [sarfata/voodooprivacy](https://github.com/sarfata/voodooprivacy)
+  It is licensed under the [Creative Commons Attribution-ShareAlike 3.0 Unported
+  License](http://creativecommons.org/licenses/by-sa/3.0/)
+  Project: [sarfata/voodooprivacy](https://github.com/sarfata/voodooprivacy)
 
