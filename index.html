@@ -1,0 +1,147 @@
+<!doctype html>
+<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
+<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
+  <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="javascripts/script.js"></script>
+
+  <title>ephemeral vpns</title>
+  <meta name="description" content="vpns that last a short time">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <header>
+      <h1 class="title">ephemeral vpns</h1>
+    </header>
+    <div id="container">
+      <p class="tagline">vpns that last a short time</p>
+      <div id="main" role="main">
+        <div class="download-bar">
+        <div class="inner">
+          <a href="https://github.com/Ramblurr/ephemvpn/tarball/master" class="download-button tar"><span>Download</span></a>
+          <a href="https://github.com/Ramblurr/ephemvpn/zipball/master" class="download-button zip"><span>Download</span></a>
+          <a href="https://github.com/Ramblurr/ephemvpn" class="code">View ephemeral vpns on GitHub</a>
+        </div>
+        <span class="blc"></span><span class="trc"></span>
+        </div>
+        <article class="markdown-body">
+          <h2>ephemeral vpn</h2>
+
+<p>vpns created on demand that last a short time</p>
+
+<div class="highlight"><pre>    <span class="nv">$ </span>ephemvpn -t 5m
+    ephemvpn v0.1
+    summoning one ipsec vpn
+    the vpn will be released into the ether 5 minutes after boot
+    <span class="o">(</span>probably around Sun Apr 07 16:54 2013<span class="o">)</span>
+    proceed? <span class="o">[</span>n<span class="o">]</span>|y: y
+    preparing cloud conjuring ritual
+    summoning a vpn from the cloud . . .
+     . . .
+     . . .
+     . . .
+
+    ephemeral vpn summoned
+
+                VPN <span class="nb">type</span>: IPSEC/L2TP PSK
+    Pre-shared key <span class="o">(</span>PSK<span class="o">)</span>: unknown impish shorten downtown
+                Username: mcfly
+                Password: baton loony paycheck obituary
+                Hostname: ec2-54-246-64-31.eu-west-1.compute.amazonaws.com
+</pre></div>
+
+<p>ephemvpn is implemented in <em>python</em> with
+<em><a href="http://code.google.com/p/boto">boto</a></em> and <em><a href="http://fabfile.org/">fabric</a></em>.
+Amazon's EC2 is the only supported cloud provider at this time (patches
+welcome).</p>
+
+<h2>Setup</h2>
+
+<h3>1. Python</h3>
+
+<p>Requires Python 2.7 and virtualenv</p>
+
+<p>Create your virtualenv then:</p>
+
+<div class="highlight"><pre>    <span class="nv">$ </span><span class="nb">source </span>your/virtenv/bin/activate
+    <span class="nv">$ </span>git clone https://github.com/Ramblurr/ephemvpn.git
+    <span class="nv">$ </span><span class="nb">cd </span>ephemvpn
+    <span class="nv">$ </span>pip install -e .
+</pre></div>
+
+<p>(TODO: submit to pypi?)</p>
+
+<h3>2. EC2</h3>
+
+<ol>
+<li>A valid AWS account with API and Secret Keys is required.</li>
+<li>Create a SSH Key Pair for each region(s) which will be used to store AMIs and run instances.</li>
+<li>Copy the private key to your local machine's "ssh" directory (~/.ssh on Linux), don't forget to chmod 600 it</li>
+</ol><h3>3. Config</h3>
+
+<p>Create <code>~/.ephemvpnrc</code> with your credentials, unless you want to specify them on
+the command line every time</p>
+
+<p>Finally, <code>$ ephemvpn</code> to summon a vpn.</p>
+
+<h2>TODO &amp; Known Issues</h2>
+
+<ul>
+<li>Audit ipsec config</li>
+<li>Add Openvpn</li>
+<li>Generate keypair for user (<a href="http://boto.s3.amazonaws.com/ref/ec2.html">ctrl+f create_keypair here</a>)</li>
+</ul><h2>License and Credits</h2>
+
+<p>ephemvpn is licensed under the BSD 3-clause license. Various components retain
+their own licenses:</p>
+
+<p><strong>EC2 and boto snippets</strong></p>
+
+<ul>
+<li>
+<a href="https://github.com/dixonwh/aws-provisioning">dixonwh/aws-provisioning</a> for some EC2+boto snippets</li>
+</ul><p><strong>ipsec config</strong></p>
+
+<ul>
+<li>
+<p>The IPSEC config script is Copyright Thomas Sarlandie 2012</p>
+
+<p>It is licensed under the <a href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported
+License</a>
+Project: <a href="https://github.com/sarfata/voodooprivacy">sarfata/voodooprivacy</a></p>
+</li>
+</ul>
+        </article>
+      </div>
+    </div>
+    <footer>
+      <div class="owner">
+      <p><a href="https://github.com/Ramblurr" class="avatar"><img src="https://secure.gravatar.com/avatar/3fe5e09cc35d9a7758049c7460a1f9bd?s=30&amp;d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-user-420.png" width="48" height="48"/></a> <a href="https://github.com/Ramblurr">Ramblurr</a> maintains <a href="https://github.com/Ramblurr/ephemvpn">ephemeral vpns</a></p>
+
+
+      </div>
+      <div class="creds">
+        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br/>theme by <a href="http://twitter.com/jonrohan/">Jon Rohan</a></small>
+      </div>
+    </footer>
+  </div>
+  <div class="current-section">
+    <a href="#top">Scroll to top</a>
+    <a href="https://github.com/Ramblurr/ephemvpn/tarball/master" class="tar">tar</a><a href="https://github.com/Ramblurr/ephemvpn/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
+    <p class="name"></p>
+  </div>
+
+  
+</body>
+</html>
