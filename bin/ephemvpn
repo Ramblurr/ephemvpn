@@ -142,6 +142,22 @@ def _confirm_time(shutdown_t):
     log.info("the vpn will be released into the ether %s after boot\n(probably around %s)" % (fuzzy_date,human_date))
     return confirm("proceed?", resp=False)
 
+def _gen_config(path):
+    if os.path.exists(path):
+        log.error("Error: config file {} exists".format(path))
+        return 1
+    c = ConfigParser.ConfigParser()
+    c.add_section('amazon')
+    c.set('amazon', 'AWS_API_KEY', 'foo')
+    c.set('amazon', 'AWS_SECRET_KEY', 'bar')
+    c.set('amazon', 'AWS_KEY_FILE',  'name')
+    c.set('amazon', 'LOCAL_AWS_KEY_FILE',  '~/.ssh/%(AWS_KEY_FILE)s.pem')
+    with open(path, 'wb') as configfile:
+        c.write(configfile)
+    log.info("empty config created at {}".format(path))
+    return 0
+
+
 def _main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-r', '--region', choices=config.AMI_ID_BY_REGION.keys(), help="Where in the world to create the VPN (default: %(default)s)", default='eu-west-1')
@@ -155,6 +171,7 @@ def _main():
     parser.add_argument('-V', '--verbose', action='store_true', help="Be more verbose")
     parser.add_argument('-q', '--quiet', action='store_true', help="Output nothing. For non-interactive unattended launches, assumes yes to all questions")
     parser.add_argument('-t', '--running-time', help="The time at or after which the VPN will terminate itself (default: %(default)s)", default='1h')
+    parser.add_argument('-G', '--generate-config', help='Path to create a config file at (recommended %(default)s)', default=os.path.expanduser('~/.ephemvpnrc'))
     args = parser.parse_args()
 
     if args.verbose:
@@ -163,6 +180,9 @@ def _main():
         log.basicConfig(level=log.CRITICAL, format='%(asctime)s %(name)-8s %(message)s')
     else:
         log.basicConfig(level=log.INFO, format='%(message)s')
+
+    if args.generate_config:
+        return _gen_config(args.generate_config)
 
     # parse config file
     cf = _parse_conf(args.config)
