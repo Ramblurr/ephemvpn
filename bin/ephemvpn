@@ -135,7 +135,7 @@ def _parse_running_time(running_time):
 def _confirm_time(shutdown_t):
     now               = datetime.datetime.now()
     # thu feb 20 14:50:00 1997
-    nice_fmt   = '%a %b %d %H:%m %Y'
+    nice_fmt   = '%a %b %d %H:%M %Y'
     human_date = time.strftime(nice_fmt, shutdown_t)
     fuzzy_date = readable_delta(now, shutdown_t)
 
@@ -198,17 +198,6 @@ def _main():
         parser.print_usage()
         return 1
 
-    try:
-        vpn = vpntypes.VPN(args.vpn_type, cf, config.AT_RUNNING_MINUTES)
-    except ValueError:
-        log.error("this vpn type is broken")
-        return 1
-
-    if vpn.needs_post_configure() and not args.identity_file:
-        log.error("vpn type {} requires sshing, so an identity file (private key) is required".format(args.vpn_type))
-        parser.print_usage()
-        return 1
-
     # calculate running time
     d_min, shutdown_t = _parse_running_time(args.running_time)
 
@@ -224,6 +213,16 @@ def _main():
 
     config.AT_RUNNING_MINUTES = d_min
 
+    try:
+        vpn = vpntypes.VPN(args.vpn_type, cf, config.AT_RUNNING_MINUTES)
+    except ValueError:
+        log.error("this vpn type is broken")
+        return 1
+
+    if vpn.needs_post_configure() and not args.identity_file:
+        log.error("vpn type {} requires sshing, so an identity file (private key) is required".format(args.vpn_type))
+        parser.print_usage()
+        return 1
 
     host = launch(vpn, args.region)
     if host is not None:

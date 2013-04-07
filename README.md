@@ -5,20 +5,25 @@ VPNs that last a short time.
 
 **Example:**
 
-    $ ephemvpn
-    authenticating to EC2
-    spinning up the instance
-    new instance "i-a6c4eaec" accessible at ec2-54-247-59-196.eu-west-1.compute.amazonaws.com
-    configuring instance ec2-54-247-59-196.eu-west-1.compute.amazonaws.com
+    # ephemvpn -t 5m
+    ephemvpn v0.1
+    summoning one ipsec vpn
+    the vpn will be released into the ether 5 minutes after boot
+    (probably around Sun Apr 07 16:54 2013)
+    proceed? [n]|y: y
+    preparing cloud conjuring ritual
+    summoning a vpn from the cloud . . .
+     . . .
+     . . .
+     . . .
 
-    VPN Deployed
+    ephemeral vpn summoned
 
-    VPN Type: IPSEC/L2TP
-    Preshared Key (PSK): checked flapjack banality full-time
-    Username: eminem
-    Password: violet clasp refuge prevent
-    Hostname: ec2-54-247-59-196.eu-west-1.compute.amazonaws.com
-
+                VPN type: IPSEC/L2TP PSK
+    Pre-shared key (PSK): unknown impish shorten downtown
+                Username: mcfly
+                Password: baton loony paycheck obituary
+                Hostname: ec2-54-246-64-31.eu-west-1.compute.amazonaws.com
 
 ## Setup
 
@@ -43,10 +48,10 @@ Create your virtualenv then:
 
 ### 3. Config
 
-Create ~/.ephemvpnrc with your credentials, unless you want to specify them on
+Create `~/.ephemvpnrc` with your credentials, unless you want to specify them on
 the command line every time
 
-Finally, `$ ./ephemvpnrc`
+Finally, `$ ephemvpn` to summon a vpn.
 
 ## TODO & Known Issues
 
@@ -55,6 +60,9 @@ Finally, `$ ./ephemvpnrc`
 * Generate keypair for user ([ctrl+f create_keypair here](http://boto.s3.amazonaws.com/ref/ec2.html))
 
 ## License and Credits
+
+ephemvpn is licensed under the BSD 3-clause license. Various components retain
+their own licenses:
 
 **EC2 and boto snippets**
 
