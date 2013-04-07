@@ -33,4 +33,4 @@ AMI_SECURITY_GROUP = 'vpn'
 AMI_TYPES = ('vpnipsec',)
 AWS_USER_NAME = 'ubuntu'
 
-AT_RUNNING_MINUTES = "1"
+AT_RUNNING_MINUTES = "60"

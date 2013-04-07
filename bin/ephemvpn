@@ -49,6 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 
+import sys
 import argparse
 import getpass
 import os
@@ -133,11 +134,11 @@ def _parse_running_time(running_time):
 def _confirm_time(shutdown_t):
     now               = datetime.datetime.now()
     # thu feb 20 14:50:00 1997
-    nice_fmt   = '%a %b %d %h:%m %y'
+    nice_fmt   = '%a %b %d %H:%m %Y'
     human_date = time.strftime(nice_fmt, shutdown_t)
     fuzzy_date = readable_delta(now, shutdown_t)
 
-    print("The VPN will self-terminate %s after boot probably around %s" % (fuzzy_date,human_date))
+    log.info("The VPN will self-terminate %s after boot probably around %s" % (fuzzy_date,human_date))
     return confirm("Launch the VPN?", resp=False)
 
 def _main():
@@ -170,11 +171,11 @@ def _main():
 
     # at scheduler doesn't support subminute periods
     if d_min < 1:
-        print("Error:running time must be greater than one minute")
-        return
+        log.error("Error:running time must be greater than one minute")
+        return 1
 
     if not args.quiet and not _confirm_time(shutdown_t):
-        return
+        return 1
 
     config.AT_RUNNING_MINUTES = d_min
 
@@ -201,34 +202,34 @@ def _main():
 
     # sanity check
     if not config.AWS_API_KEY or not config.AWS_SECRET_KEY:
-        print("AWS Credentials required")
+        log.info("AWS Credentials required")
         parser.print_usage()
-        return
+        return 1
 
     if not config.AWS_KEY_FILE:
-        print("AWS Keypair name required")
+        log.info("AWS Keypair name required")
         parser.print_usage()
-        return
+        return 1
 
     try:
         vpn = vpntypes.VPN(args.vpn_type, cf, config.AT_RUNNING_MINUTES)
     except ValueError:
-        print("This VPN Type is broken")
-        return
+        log.error("This VPN Type is broken")
+        return 1
 
     if vpn.needs_post_configure() and not args.identity_file:
-        print("VPN type {} requires SSHing, so an identity file (private key) is required".format(args.vpn_type))
+        log.error("VPN type {} requires SSHing, so an identity file (private key) is required".format(args.vpn_type))
         parser.print_usage()
-        return
+        return 1
 
     host = launch(vpn, args.region)
     if host is not None:
         configure(host, vpn)
 
-    print("\nVPN Deployed\n")
-    print(vpn.human_readable_data())
-    print("Hostname: {}".format(host))
-
+    log.info("\nVPN Deployed\n")
+    log.info(vpn.human_readable_data())
+    log.info("Hostname: {}".format(host))
+    return 0
 
 if __name__ == '__main__':
-    _main()
+    sys.exit(_main())
