@@ -1,10 +1,8 @@
 from distutils.core import setup
 
-from ephemvpn import __version__
-
 setup(
     name='ephemvpn',
-    version=__version__,
+    version='0.1',
     author='Casey Link',
     author_email='unnamedrambler@gmail.com',
     packages=['ephemvpn'],
@@ -15,7 +13,7 @@ setup(
     long_description=open('README.md').read(),
     package_data={'ephemvpn': ['*.txt', 'vpntypes/data/*']},
     install_requires=[
-        'Fabric==1.4.3',
+        'Fabric==1.6.0',
         'boto==2.6.0',
         'parsedatetime',
     ],
