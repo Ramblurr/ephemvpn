@@ -203,7 +203,7 @@ def _main():
         if args.key_name:
             config.AWS_KEY_FILE = args.key_name
         else:
-           name, ext = os.splitext(os.basename(args.identity_file))
+           name, ext = os.path.splitext(os.path.basename(args.identity_file))
            config.AWS_KEY_FILE = name
     elif args.key_name:
         config.AWS_KEY_FILE = name
