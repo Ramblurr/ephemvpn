@@ -144,8 +144,8 @@ def _confirm_time(shutdown_t):
 
 def _gen_config(path):
     if os.path.exists(path):
-        log.error("Error: config file {} exists".format(path))
-        return 1
+        log.warn("Warning: config file {} exists, not overwriting".format(path))
+        return False
     c = ConfigParser.ConfigParser()
     c.add_section('amazon')
     c.set('amazon', 'AWS_API_KEY', 'foo')
@@ -155,7 +155,7 @@ def _gen_config(path):
     with open(path, 'wb') as configfile:
         c.write(configfile)
     log.info("empty config created at {}".format(path))
-    return 0
+    return True
 
 
 def _main():
@@ -182,7 +182,8 @@ def _main():
         log.basicConfig(level=log.INFO, format='%(message)s')
 
     if args.generate_config:
-        return _gen_config(args.generate_config)
+        if _gen_config(args.generate_config):
+            return 0
 
     # parse config file
     cf = _parse_conf(args.config)
